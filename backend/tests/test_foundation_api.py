@@ -212,3 +212,22 @@ def test_mailbox_infrastructure_exposes_oauth_pool_and_deliverability():
     assert payload["pool"][0]["state"] == "healthy"
     assert payload["dns_checks"][0]["name"] == "SPF"
     assert payload["deliverability"]["bounce_rate"] == "1.4%"
+
+
+def test_system_permissions_and_audit_log_are_queryable():
+    permissions_response = client.get("/api/v1/system/permissions")
+
+    assert permissions_response.status_code == 200
+    permissions_payload = permissions_response.json()
+    assert permissions_payload["current_user"]["role"] == "sales_ops_admin"
+    assert permissions_payload["roles"][0]["label"] == "Sales Ops Admin"
+    assert permissions_payload["roles"][0]["permissions"][0]["action"] == "campaign.launch"
+    assert permissions_payload["roles"][0]["permissions"][0]["allowed"] is True
+
+    audit_response = client.get("/api/v1/system/audit-log")
+
+    assert audit_response.status_code == 200
+    audit_payload = audit_response.json()
+    assert audit_payload["total"] == 3
+    assert audit_payload["items"][0]["action"] == "template.offline_rejected"
+    assert audit_payload["items"][0]["actor"] == "Dana Keller"

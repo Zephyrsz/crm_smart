@@ -249,6 +249,39 @@ const mailboxSummary = {
   }
 };
 
+const permissions = {
+  current_user: { name: "Dana Keller", role: "sales_ops_admin" },
+  roles: [
+    {
+      role: "sales_ops_admin",
+      label: "Sales Ops Admin",
+      permissions: [
+        { action: "campaign.launch", allowed: true, scope: "all campaigns" },
+        { action: "template.offline", allowed: false, scope: "locked templates" }
+      ]
+    },
+    {
+      role: "sales_bd",
+      label: "Sales / BD",
+      permissions: [{ action: "reply.confirm", allowed: true, scope: "assigned contacts" }]
+    }
+  ]
+};
+
+const auditLog = {
+  total: 3,
+  items: [
+    {
+      id: "audit-1",
+      actor: "Dana Keller",
+      action: "template.offline_rejected",
+      entity: "SaaS intro · short v3",
+      occurred_at: "2026-06-28T10:12:00Z",
+      outcome: "blocked"
+    }
+  ]
+};
+
 function renderApp() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -301,6 +334,12 @@ beforeEach(() => {
       }
       if (path.endsWith("/api/v1/mailboxes/summary")) {
         return Response.json(mailboxSummary);
+      }
+      if (path.endsWith("/api/v1/system/permissions")) {
+        return Response.json(permissions);
+      }
+      if (path.endsWith("/api/v1/system/audit-log")) {
+        return Response.json(auditLog);
       }
       return new Response("Not found", { status: 404 });
     })
@@ -428,5 +467,19 @@ describe("Outreach OS shell", () => {
     expect(screen.getByText("Mail.Send · Mail.Read")).toBeInTheDocument();
     expect(screen.getByText("SPF")).toBeInTheDocument();
     expect(screen.getByText("1.4%")).toBeInTheDocument();
+  });
+
+  test("renders system permissions and audit log", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "System" }));
+
+    expect(await screen.findByRole("heading", { name: "System controls" })).toBeInTheDocument();
+    expect(screen.getAllByText("Dana Keller").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Sales Ops Admin")).toBeInTheDocument();
+    expect(screen.getByText("campaign.launch")).toBeInTheDocument();
+    expect(screen.getByText("template.offline_rejected")).toBeInTheDocument();
+    expect(screen.getAllByText("blocked").length).toBeGreaterThanOrEqual(1);
   });
 });

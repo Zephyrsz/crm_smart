@@ -33,6 +33,7 @@ from app.schemas.mailboxes import (
     SharedMailboxAccount,
 )
 from app.schemas.progress import CompanyProgress, ContactTimeline, LatestReply, TimelineEvent
+from app.schemas.system import AuditLogItem, CurrentUser, PermissionMatrix, PermissionRule, RolePermissions
 
 
 def get_dashboard_summary() -> DashboardSummary:
@@ -468,6 +469,68 @@ def get_mailbox_summary() -> MailboxSummary:
             reply_rate="7.8%",
         ),
     )
+
+
+def get_permission_matrix() -> PermissionMatrix:
+    return PermissionMatrix(
+        current_user=CurrentUser(name="Dana Keller", role="sales_ops_admin"),
+        roles=[
+            RolePermissions(
+                role="sales_ops_admin",
+                label="Sales Ops Admin",
+                permissions=[
+                    PermissionRule(action="campaign.launch", allowed=True, scope="all campaigns"),
+                    PermissionRule(action="template.offline", allowed=False, scope="locked templates"),
+                    PermissionRule(action="mailbox.connect", allowed=True, scope="shared accounts"),
+                ],
+            ),
+            RolePermissions(
+                role="sales_bd",
+                label="Sales / BD",
+                permissions=[
+                    PermissionRule(action="reply.confirm", allowed=True, scope="assigned contacts"),
+                    PermissionRule(action="mailbox.connect", allowed=False, scope="infrastructure"),
+                ],
+            ),
+            RolePermissions(
+                role="team_lead",
+                label="Team Lead",
+                permissions=[
+                    PermissionRule(action="meeting.review", allowed=True, scope="high-intent replies"),
+                    PermissionRule(action="import.commit", allowed=False, scope="data management"),
+                ],
+            ),
+        ],
+    )
+
+
+def get_audit_log() -> list[AuditLogItem]:
+    return [
+        AuditLogItem(
+            id="audit-1",
+            actor="Dana Keller",
+            action="template.offline_rejected",
+            entity="SaaS intro · short v3",
+            occurred_at="2026-06-28T10:12:00Z",
+            outcome="blocked",
+        ),
+        AuditLogItem(
+            id="audit-2",
+            actor="Dana Keller",
+            action="campaign.launch",
+            entity="APAC · B2B SaaS",
+            occurred_at="2026-06-28T09:02:00Z",
+            outcome="queued",
+        ),
+        AuditLogItem(
+            id="audit-3",
+            actor="System",
+            action="suppression.auto_add",
+            entity="sam@driftly.app",
+            occurred_at="2026-06-27T18:21:00Z",
+            outcome="applied",
+        ),
+    ]
 
 
 def get_templates() -> list[EmailTemplate]:

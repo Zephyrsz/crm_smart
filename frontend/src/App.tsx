@@ -16,11 +16,13 @@ import {
   Mail,
   Search,
   Send,
+  ShieldCheck,
   Upload,
   Users,
 } from "lucide-react";
 
 import {
+  type AuditLogResponse,
   type Campaign,
   type CampaignLaunchSummary,
   type Company,
@@ -33,6 +35,8 @@ import {
   type InboxThread,
   type MailboxSummary,
   type ManualConfirmItem,
+  type PermissionMatrix,
+  fetchAuditLog,
   fetchCampaignLaunchSummary,
   fetchCampaigns,
   fetchCompanies,
@@ -44,10 +48,11 @@ import {
   fetchImportPreview,
   fetchMailboxSummary,
   fetchManualConfirmQueue,
+  fetchPermissionMatrix,
   fetchTemplates,
 } from "./api";
 
-type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "inbox" | "progress" | "templates" | "mailboxes";
+type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "inbox" | "progress" | "templates" | "mailboxes" | "system";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Grid2X2 },
@@ -60,7 +65,10 @@ const navItems = [
   { id: "templates", label: "Templates", icon: FileText },
 ] satisfies Array<{ id: Screen; label: string; icon: typeof Grid2X2 }>;
 
-const infrastructureItems = [{ id: "mailboxes", label: "Mailboxes", icon: Mail }] satisfies Array<{
+const infrastructureItems = [
+  { id: "mailboxes", label: "Mailboxes", icon: Mail },
+  { id: "system", label: "System", icon: ShieldCheck },
+] satisfies Array<{
   id: Screen;
   label: string;
   icon: typeof Mail;
@@ -99,6 +107,7 @@ function App() {
           {screen === "progress" && <Progress />}
           {screen === "templates" && <Templates />}
           {screen === "mailboxes" && <Mailboxes />}
+          {screen === "system" && <SystemControls />}
         </main>
       </div>
     </div>
@@ -177,6 +186,7 @@ function Topbar({ screen, onImport }: { screen: Screen; onImport: () => void }) 
     progress: ["Progress"],
     templates: ["Templates"],
     mailboxes: ["Mailboxes"],
+    system: ["System"],
   };
   const [root, leaf] = crumbs[screen];
 
@@ -1006,6 +1016,75 @@ function MailboxContent({ data }: { data: MailboxSummary }) {
           </div>
         </div>
       </Panel>
+    </div>
+  );
+}
+
+function SystemControls() {
+  const permissionsQuery = useQuery({ queryKey: ["permissions"], queryFn: fetchPermissionMatrix });
+  const auditQuery = useQuery({ queryKey: ["audit-log"], queryFn: fetchAuditLog });
+
+  return (
+    <section className="screen screen-wide">
+      <ScreenHeader title="System controls" subtitle="Role permissions, gated actions, and audit history." />
+      <div className="system-layout">
+        <Panel title="Permissions">
+          <QueryState query={permissionsQuery}>{(data) => <PermissionMatrixView data={data} />}</QueryState>
+        </Panel>
+        <Panel title="Audit log" subtitle="Latest system decisions">
+          <QueryState query={auditQuery}>{(data) => <AuditLogView data={data} />}</QueryState>
+        </Panel>
+      </div>
+    </section>
+  );
+}
+
+function PermissionMatrixView({ data }: { data: PermissionMatrix }) {
+  return (
+    <div className="permission-stack">
+      <div className="current-user">
+        <span>Current user</span>
+        <strong>{data.current_user.name}</strong>
+        <Badge tone="info">{data.current_user.role}</Badge>
+      </div>
+      {data.roles.map((role) => (
+        <article className="permission-card" key={role.role}>
+          <div className="permission-head">
+            <strong>{role.label}</strong>
+            <span>{role.role}</span>
+          </div>
+          <div className="permission-list">
+            {role.permissions.map((permission) => (
+              <div className="permission-row" key={`${role.role}-${permission.action}`}>
+                <span>{permission.action}</span>
+                <strong>{permission.scope}</strong>
+                <Badge tone={permission.allowed ? "valid" : "invalid"}>{permission.allowed ? "allowed" : "blocked"}</Badge>
+              </div>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function AuditLogView({ data }: { data: AuditLogResponse }) {
+  return (
+    <div className="audit-list">
+      {data.items.map((item) => (
+        <article className="audit-row" key={item.id}>
+          <div>
+            <strong>{item.action}</strong>
+            <span>
+              {item.actor} · {item.entity}
+            </span>
+          </div>
+          <div>
+            <Badge tone={item.outcome === "blocked" ? "invalid" : "valid"}>{item.outcome}</Badge>
+            <time>{item.occurred_at}</time>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import campaigns, companies, contacts, dashboard, health, imports, inbox, mailboxes, progress, templates
+from app.api.v1.routes import campaigns, companies, contacts, dashboard, health, imports, inbox, mailboxes, progress, system, templates
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -12,4 +12,5 @@ api_router.include_router(campaigns.router, prefix="/campaigns", tags=["campaign
 api_router.include_router(inbox.router, prefix="/inbox", tags=["inbox"])
 api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
 api_router.include_router(mailboxes.router, prefix="/mailboxes", tags=["mailboxes"])
+api_router.include_router(system.router, prefix="/system", tags=["system"])
 api_router.include_router(templates.router, prefix="/templates", tags=["templates"])

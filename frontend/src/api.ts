@@ -240,6 +240,34 @@ export type MailboxSummary = {
   };
 };
 
+export type PermissionMatrix = {
+  current_user: {
+    name: string;
+    role: string;
+  };
+  roles: Array<{
+    role: string;
+    label: string;
+    permissions: Array<{
+      action: string;
+      allowed: boolean;
+      scope: string;
+    }>;
+  }>;
+};
+
+export type AuditLogResponse = {
+  total: number;
+  items: Array<{
+    id: string;
+    actor: string;
+    action: string;
+    entity: string;
+    occurred_at: string;
+    outcome: string;
+  }>;
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -309,6 +337,14 @@ export function fetchContactTimeline(contactId: string) {
 
 export function fetchMailboxSummary() {
   return request<MailboxSummary>("/api/v1/mailboxes/summary");
+}
+
+export function fetchPermissionMatrix() {
+  return request<PermissionMatrix>("/api/v1/system/permissions");
+}
+
+export function fetchAuditLog() {
+  return request<AuditLogResponse>("/api/v1/system/audit-log");
 }
 
 export function fetchTemplates() {

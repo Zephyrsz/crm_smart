@@ -24,6 +24,7 @@ from app.schemas.imports import (
     VerificationBucket as ImportVerificationBucket,
     VerificationStage,
 )
+from app.schemas.inbox import EmailMessage, InboxThread, ManualConfirmItem
 
 
 def get_dashboard_summary() -> DashboardSummary:
@@ -266,6 +267,93 @@ def get_campaign_launch_summary(campaign_id: str) -> CampaignLaunchSummary | Non
         estimated_days=campaign.eligibility.estimated_days,
         first_send="Tomorrow · 09:00",
     )
+
+
+def get_inbox_threads() -> list[InboxThread]:
+    return [
+        InboxThread(
+            id="thread-mara",
+            contact_name="Mara Whitfield",
+            company="Northwind Labs",
+            subject="Re: cut Northwind onboarding time by 40%",
+            intent="interested",
+            suggested_action="Send next-step template",
+            last_message_at="2026-06-28T09:30:00Z",
+            messages=[
+                EmailMessage(
+                    id="msg-mara-1",
+                    direction="outbound",
+                    subject="cut Northwind onboarding time by 40%",
+                    body="Hi Mara, noticed Northwind is scaling fast...",
+                    sent_at="2026-06-27T09:00:00Z",
+                ),
+                EmailMessage(
+                    id="msg-mara-2",
+                    direction="inbound",
+                    subject="Re: cut Northwind onboarding time by 40%",
+                    body="This looks relevant. Can you send details?",
+                    sent_at="2026-06-28T09:30:00Z",
+                ),
+            ],
+        ),
+        InboxThread(
+            id="thread-tom",
+            contact_name="Tom Becker",
+            company="Hexadata",
+            subject="Re: times that work?",
+            intent="meeting",
+            suggested_action="Book team meeting",
+            last_message_at="2026-06-28T08:15:00Z",
+            messages=[
+                EmailMessage(
+                    id="msg-tom-1",
+                    direction="inbound",
+                    subject="Re: times that work?",
+                    body="Happy to meet next week. Please send a calendar link.",
+                    sent_at="2026-06-28T08:15:00Z",
+                )
+            ],
+        ),
+        InboxThread(
+            id="thread-aiko",
+            contact_name="Aiko Tanaka",
+            company="Sakura Cloud",
+            subject="Re: cloud migration benchmarks",
+            intent="later",
+            suggested_action="Schedule nurture follow-up",
+            last_message_at="2026-06-27T16:10:00Z",
+            messages=[
+                EmailMessage(
+                    id="msg-aiko-1",
+                    direction="inbound",
+                    subject="Re: cloud migration benchmarks",
+                    body="Interesting, but our planning cycle starts next quarter.",
+                    sent_at="2026-06-27T16:10:00Z",
+                )
+            ],
+        ),
+    ]
+
+
+def get_manual_confirm_queue() -> list[ManualConfirmItem]:
+    return [
+        ManualConfirmItem(
+            id="confirm-mara",
+            contact_name="Mara Whitfield",
+            company="Northwind Labs",
+            intent="interested",
+            suggested_action="send_next",
+            reply_excerpt="This looks relevant. Can you send details?",
+        ),
+        ManualConfirmItem(
+            id="confirm-tom",
+            contact_name="Tom Becker",
+            company="Hexadata",
+            intent="meeting",
+            suggested_action="book_meeting",
+            reply_excerpt="Happy to meet next week. Please send a calendar link.",
+        ),
+    ]
 
 
 def get_templates() -> list[EmailTemplate]:

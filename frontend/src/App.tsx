@@ -10,6 +10,7 @@ import {
   Database,
   FileText,
   Grid2X2,
+  Inbox as InboxIcon,
   Lock,
   Mail,
   Search,
@@ -26,16 +27,20 @@ import {
   type DashboardSummary,
   type EmailTemplate,
   type ImportPreview,
+  type InboxThread,
+  type ManualConfirmItem,
   fetchCampaignLaunchSummary,
   fetchCampaigns,
   fetchCompanies,
   fetchContacts,
   fetchDashboardSummary,
+  fetchInboxThreads,
   fetchImportPreview,
+  fetchManualConfirmQueue,
   fetchTemplates,
 } from "./api";
 
-type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "templates" | "mailboxes";
+type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "inbox" | "templates" | "mailboxes";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Grid2X2 },
@@ -43,6 +48,7 @@ const navItems = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "import", label: "Import data", icon: Upload },
   { id: "campaigns", label: "Campaigns", icon: Send },
+  { id: "inbox", label: "Inbox", icon: InboxIcon },
   { id: "templates", label: "Templates", icon: FileText },
 ] satisfies Array<{ id: Screen; label: string; icon: typeof Grid2X2 }>;
 
@@ -81,6 +87,7 @@ function App() {
           {screen === "companies" && <Companies />}
           {screen === "import" && <ImportWizard />}
           {screen === "campaigns" && <Campaigns />}
+          {screen === "inbox" && <Inbox />}
           {screen === "templates" && <Templates />}
           {screen === "mailboxes" && <PlaceholderScreen title="Mailboxes" subtitle="Shared mailbox OAuth, warm-up, and deliverability health." />}
         </main>
@@ -157,6 +164,7 @@ function Topbar({ screen, onImport }: { screen: Screen; onImport: () => void }) 
     companies: ["Companies"],
     import: ["Import data", "New import"],
     campaigns: ["Campaigns", "Configuration"],
+    inbox: ["Inbox"],
     templates: ["Templates"],
     mailboxes: ["Mailboxes"],
   };
@@ -729,6 +737,85 @@ function LaunchSummary({ summary }: { summary: CampaignLaunchSummary }) {
         {summary.launch_label}
       </button>
     </div>
+  );
+}
+
+function Inbox() {
+  const threadsQuery = useQuery({ queryKey: ["inbox-threads"], queryFn: fetchInboxThreads });
+  const confirmQuery = useQuery({ queryKey: ["manual-confirm"], queryFn: fetchManualConfirmQueue });
+
+  return (
+    <section className="screen screen-wide">
+      <ScreenHeader title="Inbox" subtitle="Inbound replies, intent analysis, and manual-confirm actions." />
+      <div className="inbox-layout">
+        <Panel title="Shared inbox">
+          <QueryState query={threadsQuery}>
+            {(data) => (
+              <div className="thread-list">
+                {data.items.map((thread) => (
+                  <ThreadCard thread={thread} key={thread.id} />
+                ))}
+              </div>
+            )}
+          </QueryState>
+        </Panel>
+        <Panel title="Manual-confirm queue">
+          <QueryState query={confirmQuery}>
+            {(data) => (
+              <div className="confirm-list">
+                {data.items.map((item) => (
+                  <ManualConfirmCard item={item} key={item.id} />
+                ))}
+              </div>
+            )}
+          </QueryState>
+        </Panel>
+      </div>
+    </section>
+  );
+}
+
+function ThreadCard({ thread }: { thread: InboxThread }) {
+  const latest = thread.messages[thread.messages.length - 1];
+  return (
+    <article className="thread-card">
+      <div className="thread-head">
+        <div>
+          <strong>{thread.contact_name}</strong>
+          <span>{thread.company}</span>
+        </div>
+        <Badge tone={thread.intent}>{thread.intent[0].toUpperCase() + thread.intent.slice(1)}</Badge>
+      </div>
+      <div className="subject-line">{thread.subject}</div>
+      <p>{latest.body}</p>
+      <div className="thread-footer">
+        <span>{latest.direction}</span>
+        <strong>{thread.suggested_action}</strong>
+      </div>
+    </article>
+  );
+}
+
+function ManualConfirmCard({ item }: { item: ManualConfirmItem }) {
+  return (
+    <article className="confirm-card">
+      <div className="thread-head">
+        <div>
+          <strong>{item.contact_name}</strong>
+          <span>{item.company}</span>
+        </div>
+        <Badge tone={item.intent}>{item.intent[0].toUpperCase() + item.intent.slice(1)}</Badge>
+      </div>
+      <p>{item.reply_excerpt}</p>
+      <div className="confirm-actions">
+        <button className="primary-button compact" type="button">
+          {item.suggested_action === "book_meeting" ? "Book meeting" : "Send next"}
+        </button>
+        <button className="secondary-button" type="button">
+          Suppress
+        </button>
+      </div>
+    </article>
   );
 }
 

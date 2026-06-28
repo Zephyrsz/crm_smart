@@ -140,6 +140,44 @@ export type CampaignLaunchSummary = {
   first_send: string;
 };
 
+export type EmailMessage = {
+  id: string;
+  direction: "outbound" | "inbound";
+  subject: string;
+  body: string;
+  sent_at: string;
+};
+
+export type InboxThread = {
+  id: string;
+  contact_name: string;
+  company: string;
+  subject: string;
+  intent: string;
+  suggested_action: string;
+  last_message_at: string;
+  messages: EmailMessage[];
+};
+
+export type InboxThreadListResponse = {
+  total: number;
+  items: InboxThread[];
+};
+
+export type ManualConfirmItem = {
+  id: string;
+  contact_name: string;
+  company: string;
+  intent: string;
+  suggested_action: string;
+  reply_excerpt: string;
+};
+
+export type ManualConfirmQueueResponse = {
+  total: number;
+  items: ManualConfirmItem[];
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -189,6 +227,14 @@ export function fetchCampaigns() {
 
 export function fetchCampaignLaunchSummary(campaignId: string) {
   return request<CampaignLaunchSummary>(`/api/v1/campaigns/${campaignId}/launch-summary`);
+}
+
+export function fetchInboxThreads() {
+  return request<InboxThreadListResponse>("/api/v1/inbox/threads");
+}
+
+export function fetchManualConfirmQueue() {
+  return request<ManualConfirmQueueResponse>("/api/v1/inbox/manual-confirm");
 }
 
 export function fetchTemplates() {

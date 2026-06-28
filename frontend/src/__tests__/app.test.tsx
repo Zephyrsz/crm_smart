@@ -145,6 +145,39 @@ const launchSummary = {
   first_send: "Tomorrow · 09:00"
 };
 
+const inboxThreads = {
+  total: 1,
+  items: [
+    {
+      id: "thread-mara",
+      contact_name: "Mara Whitfield",
+      company: "Northwind Labs",
+      subject: "Re: cut Northwind onboarding time by 40%",
+      intent: "interested",
+      suggested_action: "Send next-step template",
+      last_message_at: "2026-06-28T09:30:00Z",
+      messages: [
+        { id: "msg-1", direction: "outbound", subject: "cut Northwind onboarding time by 40%", body: "Hi Mara...", sent_at: "2026-06-27T09:00:00Z" },
+        { id: "msg-2", direction: "inbound", subject: "Re: cut Northwind onboarding time by 40%", body: "This looks relevant. Can you send details?", sent_at: "2026-06-28T09:30:00Z" }
+      ]
+    }
+  ]
+};
+
+const manualConfirm = {
+  total: 1,
+  items: [
+    {
+      id: "confirm-mara",
+      contact_name: "Mara Whitfield",
+      company: "Northwind Labs",
+      intent: "interested",
+      suggested_action: "send_next",
+      reply_excerpt: "This looks relevant. Can you send details?"
+    }
+  ]
+};
+
 function renderApp() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -182,6 +215,12 @@ beforeEach(() => {
       }
       if (path.endsWith("/api/v1/campaigns")) {
         return Response.json(campaigns);
+      }
+      if (path.endsWith("/api/v1/inbox/threads")) {
+        return Response.json(inboxThreads);
+      }
+      if (path.endsWith("/api/v1/inbox/manual-confirm")) {
+        return Response.json(manualConfirm);
       }
       return new Response("Not found", { status: 404 });
     })
@@ -267,5 +306,18 @@ describe("Outreach OS shell", () => {
     expect(screen.getByText("200")).toBeInTheDocument();
     expect(screen.getByText("14 days")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Queue for review" })).toBeInTheDocument();
+  });
+
+  test("renders inbox threads with intent and manual-confirm queue", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Inbox" }));
+
+    expect(await screen.findByRole("heading", { name: "Inbox" })).toBeInTheDocument();
+    expect((await screen.findAllByText("Mara Whitfield")).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Interested").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Send next-step template")).toBeInTheDocument();
+    expect(screen.getAllByText("This looks relevant. Can you send details?").length).toBeGreaterThanOrEqual(1);
   });
 });

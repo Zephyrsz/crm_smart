@@ -146,3 +146,32 @@ def test_campaign_launch_summary_respects_manual_confirm_gate():
         "estimated_days": 2,
         "first_send": "Tomorrow · 09:00",
     }
+
+
+def test_inbox_threads_expose_inbound_outbound_history_and_intent():
+    response = client.get("/api/v1/inbox/threads")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 3
+    assert payload["items"][0]["contact_name"] == "Mara Whitfield"
+    assert payload["items"][0]["intent"] == "interested"
+    assert payload["items"][0]["suggested_action"] == "Send next-step template"
+    assert payload["items"][0]["messages"][0]["direction"] == "outbound"
+    assert payload["items"][0]["messages"][1]["direction"] == "inbound"
+
+
+def test_manual_confirm_queue_exposes_actionable_replies():
+    response = client.get("/api/v1/inbox/manual-confirm")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 2
+    assert payload["items"][0] == {
+        "id": "confirm-mara",
+        "contact_name": "Mara Whitfield",
+        "company": "Northwind Labs",
+        "intent": "interested",
+        "suggested_action": "send_next",
+        "reply_excerpt": "This looks relevant. Can you send details?",
+    }

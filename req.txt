@@ -1,0 +1,4 @@
+1. this project has a frontend ui draft  in /Users/rgwei/pj/pj_zk/crm_smart/Outreach_OS.dc.html
+2. I want to implement this project with frontend and backend seperated.
+3. you need to follow the /Users/rgwei/pj/pj_zk/crm_smart/Module_Task_List.md
+4. you need to use git to init the project and when implement the module page by page , each module need to add test case to test the module , when module finished and pasted, you need to add a git commit

@@ -1,0 +1,13 @@
+.DS_Store
+.thumbnail
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+.env
+.env.*
+!.env.example

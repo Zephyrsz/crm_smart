@@ -893,6 +893,48 @@ progress::-moz-progress-bar {
   font-size: 34px;
 }
 
+.campaign-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 13px;
+}
+
+.campaign-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.campaign-title strong,
+.campaign-title span {
+  display: block;
+}
+
+.campaign-title span {
+  color: var(--muted);
+}
+
+.gate-state {
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: oklch(0.42 0.16 262);
+  font-weight: 800;
+}
+
+.launch-summary {
+  margin-top: 14px;
+}
+
+.launch-summary .primary-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .drop-zone strong,
 .empty-state strong {
   color: var(--ink);

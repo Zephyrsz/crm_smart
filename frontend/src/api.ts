@@ -99,6 +99,47 @@ export type ImportPreview = {
   };
 };
 
+export type Campaign = {
+  id: string;
+  name: string;
+  status: string;
+  template_id: string;
+  template_name: string;
+  manual_confirm_gate: boolean;
+  rules: {
+    industry: string;
+    send_window: string;
+    daily_cap_per_mailbox: number;
+    active_mailboxes: number;
+    send_interval_minutes: number;
+    cool_down_days: number;
+    dedupe_across_campaigns: boolean;
+    auto_suppress_unsubscribed: boolean;
+  };
+  eligibility: {
+    audience: number;
+    valid_emails: number;
+    suppressed: number;
+    eligible_recipients: number;
+    estimated_days: number;
+  };
+};
+
+export type CampaignListResponse = {
+  total: number;
+  items: Campaign[];
+};
+
+export type CampaignLaunchSummary = {
+  campaign_id: string;
+  launch_label: string;
+  route: "review_queue" | "send_queue" | string;
+  eligible_recipients: number;
+  daily_total: number;
+  estimated_days: number;
+  first_send: string;
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -140,6 +181,14 @@ export function fetchCompanies() {
 
 export function fetchImportPreview() {
   return request<ImportPreview>("/api/v1/imports/preview");
+}
+
+export function fetchCampaigns() {
+  return request<CampaignListResponse>("/api/v1/campaigns");
+}
+
+export function fetchCampaignLaunchSummary(campaignId: string) {
+  return request<CampaignLaunchSummary>(`/api/v1/campaigns/${campaignId}/launch-summary`);
 }
 
 export function fetchTemplates() {

@@ -1,5 +1,11 @@
 from app.schemas.contacts import Contact
 from app.schemas.companies import Company
+from app.schemas.campaigns import (
+    Campaign,
+    CampaignEligibility,
+    CampaignLaunchSummary,
+    CampaignRules,
+)
 from app.schemas.dashboard import (
     DashboardSummary,
     KpiMetric,
@@ -180,6 +186,85 @@ def get_import_preview() -> ImportPreview:
             send_eligible=842,
             suppressed=406,
         ),
+    )
+
+
+def get_campaigns() -> list[Campaign]:
+    base_rules = CampaignRules(
+        industry="B2B SaaS",
+        send_window="09:00-16:30 local",
+        daily_cap_per_mailbox=200,
+        active_mailboxes=3,
+        send_interval_minutes=7,
+        cool_down_days=14,
+        dedupe_across_campaigns=True,
+        auto_suppress_unsubscribed=True,
+    )
+    return [
+        Campaign(
+            id="apac-saas",
+            name="APAC · B2B SaaS",
+            status="live",
+            template_id="intro_saas",
+            template_name="SaaS intro · short",
+            manual_confirm_gate=True,
+            rules=base_rules,
+            eligibility=CampaignEligibility(
+                audience=1248,
+                valid_emails=842,
+                suppressed=406,
+                eligible_recipients=842,
+                estimated_days=2,
+            ),
+        ),
+        Campaign(
+            id="fintech-series-b",
+            name="Fintech Series-B",
+            status="review",
+            template_id="case_study",
+            template_name="Case study drop",
+            manual_confirm_gate=True,
+            rules=base_rules.model_copy(update={"industry": "Fintech", "daily_cap_per_mailbox": 150}),
+            eligibility=CampaignEligibility(
+                audience=864,
+                valid_emails=410,
+                suppressed=122,
+                eligible_recipients=410,
+                estimated_days=1,
+            ),
+        ),
+        Campaign(
+            id="na-enterprise",
+            name="NA Enterprise",
+            status="draft",
+            template_id="breakup",
+            template_name="Break-up nudge",
+            manual_confirm_gate=False,
+            rules=base_rules.model_copy(update={"industry": "Enterprise", "cool_down_days": 21}),
+            eligibility=CampaignEligibility(
+                audience=2104,
+                valid_emails=1204,
+                suppressed=386,
+                eligible_recipients=1204,
+                estimated_days=3,
+            ),
+        ),
+    ]
+
+
+def get_campaign_launch_summary(campaign_id: str) -> CampaignLaunchSummary | None:
+    campaign = next((item for item in get_campaigns() if item.id == campaign_id), None)
+    if campaign is None:
+        return None
+    daily_total = campaign.rules.daily_cap_per_mailbox * campaign.rules.active_mailboxes
+    return CampaignLaunchSummary(
+        campaign_id=campaign.id,
+        launch_label="Queue for review" if campaign.manual_confirm_gate else "Launch campaign",
+        route="review_queue" if campaign.manual_confirm_gate else "send_queue",
+        eligible_recipients=campaign.eligibility.eligible_recipients,
+        daily_total=daily_total,
+        estimated_days=campaign.eligibility.estimated_days,
+        first_send="Tomorrow · 09:00",
     )
 
 

@@ -19,11 +19,15 @@ import {
 } from "lucide-react";
 
 import {
+  type Campaign,
+  type CampaignLaunchSummary,
   type Company,
   type Contact,
   type DashboardSummary,
   type EmailTemplate,
   type ImportPreview,
+  fetchCampaignLaunchSummary,
+  fetchCampaigns,
   fetchCompanies,
   fetchContacts,
   fetchDashboardSummary,
@@ -605,39 +609,126 @@ function ImportContent({ preview }: { preview: ImportPreview }) {
 }
 
 function Campaigns() {
+  const campaignsQuery = useQuery({ queryKey: ["campaigns"], queryFn: fetchCampaigns });
+
   return (
     <section className="screen screen-wide">
       <ScreenHeader title="Campaign configuration" subtitle="Template · industry rules · throttle · suppression" />
-      <div className="dashboard-grid">
-        <Panel title="Manual-confirm gate" tag="GATED">
-          <p className="body-copy">
-            Replies and outbound route to a review queue. Nothing leaves without human approval for this segment.
-          </p>
-          <div className="summary-row">
-            <span>Eligible recipients</span>
-            <strong>842</strong>
-          </div>
-          <div className="summary-row">
-            <span>Estimated throughput</span>
-            <strong>600/day</strong>
-          </div>
-        </Panel>
-        <Panel title="Throttle and suppression">
-          <div className="summary-row">
-            <span>Daily cap per mailbox</span>
-            <strong>200</strong>
-          </div>
-          <div className="summary-row">
-            <span>Cool-down</span>
-            <strong>14 days</strong>
-          </div>
-          <div className="summary-row">
-            <span>Cross-campaign dedupe</span>
-            <strong>On</strong>
-          </div>
-        </Panel>
-      </div>
+      <QueryState query={campaignsQuery}>
+        {(data) => <CampaignsContent campaign={data.items[0]} />}
+      </QueryState>
     </section>
+  );
+}
+
+function CampaignsContent({ campaign }: { campaign: Campaign }) {
+  const launchQuery = useQuery({
+    queryKey: ["campaign-launch-summary", campaign.id],
+    queryFn: () => fetchCampaignLaunchSummary(campaign.id),
+  });
+
+  return (
+    <div className="campaign-layout">
+      <Panel title="Campaign">
+        <div className="campaign-title">
+          <div>
+            <strong>{campaign.name}</strong>
+            <span>
+              {campaign.status} · {campaign.template_name}
+            </span>
+          </div>
+          <Badge tone={campaign.status === "live" ? "valid" : "info"}>{campaign.status}</Badge>
+        </div>
+        <div className="summary-row">
+          <span>Audience</span>
+          <strong>{formatNumber(campaign.eligibility.audience)}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Eligible recipients</span>
+          <strong>{formatNumber(campaign.eligibility.eligible_recipients)}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Suppressed</span>
+          <strong>{formatNumber(campaign.eligibility.suppressed)}</strong>
+        </div>
+      </Panel>
+
+      <Panel title="Manual-confirm gate" tag={campaign.manual_confirm_gate ? "GATED" : "BROAD-SEND"}>
+        <div className="gate-state">{campaign.manual_confirm_gate ? "On — review before send" : "Off — broad-send"}</div>
+        <p className="body-copy">
+          {campaign.manual_confirm_gate
+            ? "Replies and outbound route to a review queue. Nothing leaves without human approval for this segment."
+            : "Eligible recipients go directly into the throttled send queue."}
+        </p>
+        <QueryState query={launchQuery}>
+          {(summary) => <LaunchSummary summary={summary} />}
+        </QueryState>
+      </Panel>
+
+      <Panel title="Throttle and suppression">
+        <div className="summary-row">
+          <span>Daily cap per mailbox</span>
+          <strong>{campaign.rules.daily_cap_per_mailbox}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Active mailboxes</span>
+          <strong>{campaign.rules.active_mailboxes}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Send interval</span>
+          <strong>{campaign.rules.send_interval_minutes} min</strong>
+        </div>
+        <div className="summary-row">
+          <span>Cool-down</span>
+          <strong>{campaign.rules.cool_down_days} days</strong>
+        </div>
+        <div className="summary-row">
+          <span>Cross-campaign dedupe</span>
+          <strong>{campaign.rules.dedupe_across_campaigns ? "On" : "Off"}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Auto-suppress unsubscribed</span>
+          <strong>{campaign.rules.auto_suppress_unsubscribed ? "On" : "Off"}</strong>
+        </div>
+      </Panel>
+
+      <Panel title="Industry rule">
+        <div className="summary-row">
+          <span>Industry</span>
+          <strong>{campaign.rules.industry}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Sending window</span>
+          <strong>{campaign.rules.send_window}</strong>
+        </div>
+        <div className="summary-row">
+          <span>Template</span>
+          <strong>{campaign.template_name}</strong>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+function LaunchSummary({ summary }: { summary: CampaignLaunchSummary }) {
+  return (
+    <div className="launch-summary">
+      <div className="summary-row">
+        <span>Daily total</span>
+        <strong>{summary.daily_total}/day</strong>
+      </div>
+      <div className="summary-row">
+        <span>ETA</span>
+        <strong>{summary.estimated_days} days</strong>
+      </div>
+      <div className="summary-row">
+        <span>First send</span>
+        <strong>{summary.first_send}</strong>
+      </div>
+      <button className="primary-button" type="button">
+        {summary.launch_label}
+      </button>
+    </div>
   );
 }
 

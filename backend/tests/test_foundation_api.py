@@ -110,3 +110,39 @@ def test_companies_endpoint_returns_account_progress_and_feasibility():
         "last_contacted": "2d",
         "feasibility": "Valid",
     }
+
+
+def test_campaigns_endpoint_exposes_rules_gate_and_launch_summary():
+    response = client.get("/api/v1/campaigns")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 3
+    campaign = payload["items"][0]
+    assert campaign["name"] == "APAC · B2B SaaS"
+    assert campaign["template_id"] == "intro_saas"
+    assert campaign["manual_confirm_gate"] is True
+    assert campaign["rules"]["daily_cap_per_mailbox"] == 200
+    assert campaign["rules"]["cool_down_days"] == 14
+    assert campaign["eligibility"] == {
+        "audience": 1248,
+        "valid_emails": 842,
+        "suppressed": 406,
+        "eligible_recipients": 842,
+        "estimated_days": 2,
+    }
+
+
+def test_campaign_launch_summary_respects_manual_confirm_gate():
+    response = client.get("/api/v1/campaigns/apac-saas/launch-summary")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "campaign_id": "apac-saas",
+        "launch_label": "Queue for review",
+        "route": "review_queue",
+        "eligible_recipients": 842,
+        "daily_total": 600,
+        "estimated_days": 2,
+        "first_send": "Tomorrow · 09:00",
+    }

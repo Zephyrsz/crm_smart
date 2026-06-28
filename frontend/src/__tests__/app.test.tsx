@@ -104,6 +104,47 @@ const companies = {
   ]
 };
 
+const campaigns = {
+  total: 1,
+  items: [
+    {
+      id: "apac-saas",
+      name: "APAC · B2B SaaS",
+      status: "live",
+      template_id: "intro_saas",
+      template_name: "SaaS intro · short",
+      manual_confirm_gate: true,
+      rules: {
+        industry: "B2B SaaS",
+        send_window: "09:00-16:30 local",
+        daily_cap_per_mailbox: 200,
+        active_mailboxes: 3,
+        send_interval_minutes: 7,
+        cool_down_days: 14,
+        dedupe_across_campaigns: true,
+        auto_suppress_unsubscribed: true
+      },
+      eligibility: {
+        audience: 1248,
+        valid_emails: 842,
+        suppressed: 406,
+        eligible_recipients: 842,
+        estimated_days: 2
+      }
+    }
+  ]
+};
+
+const launchSummary = {
+  campaign_id: "apac-saas",
+  launch_label: "Queue for review",
+  route: "review_queue",
+  eligible_recipients: 842,
+  daily_total: 600,
+  estimated_days: 2,
+  first_send: "Tomorrow · 09:00"
+};
+
 function renderApp() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -135,6 +176,12 @@ beforeEach(() => {
       }
       if (path.endsWith("/api/v1/companies")) {
         return Response.json(companies);
+      }
+      if (path.endsWith("/api/v1/campaigns/apac-saas/launch-summary")) {
+        return Response.json(launchSummary);
+      }
+      if (path.endsWith("/api/v1/campaigns")) {
+        return Response.json(campaigns);
       }
       return new Response("Not found", { status: 404 });
     })
@@ -206,5 +253,19 @@ describe("Outreach OS shell", () => {
     expect(within(row).getByText("B2B SaaS")).toBeInTheDocument();
     expect(within(row).getByText("70%")).toBeInTheDocument();
     expect(within(row).getByText("Valid")).toBeInTheDocument();
+  });
+
+  test("renders campaign rules, suppression, and manual-confirm gate", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Campaigns" }));
+
+    expect(await screen.findByRole("heading", { name: "Campaign configuration" })).toBeInTheDocument();
+    expect(await screen.findByText("APAC · B2B SaaS")).toBeInTheDocument();
+    expect(screen.getByText("On — review before send")).toBeInTheDocument();
+    expect(screen.getByText("200")).toBeInTheDocument();
+    expect(screen.getByText("14 days")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Queue for review" })).toBeInTheDocument();
   });
 });

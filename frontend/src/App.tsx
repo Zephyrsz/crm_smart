@@ -11,6 +11,7 @@ import {
   FileText,
   Grid2X2,
   Inbox as InboxIcon,
+  ListChecks,
   Lock,
   Mail,
   Search,
@@ -23,7 +24,9 @@ import {
   type Campaign,
   type CampaignLaunchSummary,
   type Company,
+  type CompanyProgress,
   type Contact,
+  type ContactTimeline,
   type DashboardSummary,
   type EmailTemplate,
   type ImportPreview,
@@ -32,6 +35,8 @@ import {
   fetchCampaignLaunchSummary,
   fetchCampaigns,
   fetchCompanies,
+  fetchCompanyProgress,
+  fetchContactTimeline,
   fetchContacts,
   fetchDashboardSummary,
   fetchInboxThreads,
@@ -40,7 +45,7 @@ import {
   fetchTemplates,
 } from "./api";
 
-type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "inbox" | "templates" | "mailboxes";
+type Screen = "dashboard" | "contacts" | "companies" | "import" | "campaigns" | "inbox" | "progress" | "templates" | "mailboxes";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Grid2X2 },
@@ -49,6 +54,7 @@ const navItems = [
   { id: "import", label: "Import data", icon: Upload },
   { id: "campaigns", label: "Campaigns", icon: Send },
   { id: "inbox", label: "Inbox", icon: InboxIcon },
+  { id: "progress", label: "Progress", icon: ListChecks },
   { id: "templates", label: "Templates", icon: FileText },
 ] satisfies Array<{ id: Screen; label: string; icon: typeof Grid2X2 }>;
 
@@ -88,6 +94,7 @@ function App() {
           {screen === "import" && <ImportWizard />}
           {screen === "campaigns" && <Campaigns />}
           {screen === "inbox" && <Inbox />}
+          {screen === "progress" && <Progress />}
           {screen === "templates" && <Templates />}
           {screen === "mailboxes" && <PlaceholderScreen title="Mailboxes" subtitle="Shared mailbox OAuth, warm-up, and deliverability health." />}
         </main>
@@ -165,6 +172,7 @@ function Topbar({ screen, onImport }: { screen: Screen; onImport: () => void }) 
     import: ["Import data", "New import"],
     campaigns: ["Campaigns", "Configuration"],
     inbox: ["Inbox"],
+    progress: ["Progress"],
     templates: ["Templates"],
     mailboxes: ["Mailboxes"],
   };
@@ -816,6 +824,96 @@ function ManualConfirmCard({ item }: { item: ManualConfirmItem }) {
         </button>
       </div>
     </article>
+  );
+}
+
+function Progress() {
+  const companyQuery = useQuery({
+    queryKey: ["company-progress", "northwind-labs"],
+    queryFn: () => fetchCompanyProgress("northwind-labs"),
+  });
+  const timelineQuery = useQuery({
+    queryKey: ["contact-timeline", "mara-whitfield"],
+    queryFn: () => fetchContactTimeline("mara-whitfield"),
+  });
+
+  return (
+    <section className="screen screen-wide">
+      <ScreenHeader title="Outreach progress" subtitle="Company feasibility, last contact, and contact timeline." />
+      <div className="progress-layout">
+        <Panel title="Company progress" subtitle="Northwind Labs">
+          <QueryState query={companyQuery}>
+            {(company) => <CompanyProgressCard progress={company} />}
+          </QueryState>
+        </Panel>
+        <Panel title="Contact timeline" subtitle="Latest activity">
+          <QueryState query={timelineQuery}>
+            {(timeline) => <ContactTimelineList timeline={timeline} />}
+          </QueryState>
+        </Panel>
+      </div>
+    </section>
+  );
+}
+
+function CompanyProgressCard({ progress }: { progress: CompanyProgress }) {
+  const hitRate = Math.round((progress.contacts_hit / progress.total_contacts) * 100);
+
+  return (
+    <div className="progress-card">
+      <div className="progress-topline">
+        <div>
+          <strong>{progress.company_name}</strong>
+          <span>{progress.industry}</span>
+        </div>
+        <Badge tone="interested">{progress.feasibility}</Badge>
+      </div>
+
+      <div className="progress-meter">
+        <div>
+          <span>Contacts reached</span>
+          <strong>
+            {progress.contacts_hit} of {progress.total_contacts} contacts hit
+          </strong>
+        </div>
+        <progress value={hitRate} max={100} aria-label={`${progress.company_name} contacts hit`} />
+      </div>
+
+      <div className="summary-row">
+        <span>Overall status</span>
+        <strong>{progress.overall_status.replace("_", " · ")}</strong>
+      </div>
+      <div className="summary-row">
+        <span>Last contact</span>
+        <strong>{progress.last_contacted_at}</strong>
+      </div>
+      <div className="latest-reply">
+        <span>Latest reply</span>
+        <strong>{progress.latest_reply.contact_name}</strong>
+        <p>{progress.latest_reply.excerpt}</p>
+        <Badge tone={progress.latest_reply.intent}>{progress.latest_reply.intent}</Badge>
+      </div>
+    </div>
+  );
+}
+
+function ContactTimelineList({ timeline }: { timeline: ContactTimeline }) {
+  return (
+    <div className="timeline-list">
+      <div className="timeline-state">
+        <Badge tone="interested">{timeline.current_state.replace("_", " · ")}</Badge>
+      </div>
+      {timeline.items.map((item) => (
+        <article className="timeline-item" key={item.id}>
+          <span className={`status-dot ${item.event_type === "reply" ? "interested" : item.event_type === "sent" ? "meeting" : "valid"}`} />
+          <div>
+            <strong>{item.title}</strong>
+            <p>{item.detail}</p>
+            <time>{item.occurred_at}</time>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 

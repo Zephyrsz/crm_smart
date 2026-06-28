@@ -175,3 +175,26 @@ def test_manual_confirm_queue_exposes_actionable_replies():
         "suggested_action": "send_next",
         "reply_excerpt": "This looks relevant. Can you send details?",
     }
+
+
+def test_progress_endpoints_expose_company_feasibility_and_contact_timeline():
+    company_response = client.get("/api/v1/progress/companies/northwind-labs")
+
+    assert company_response.status_code == 200
+    company_payload = company_response.json()
+    assert company_payload["company_id"] == "northwind-labs"
+    assert company_payload["overall_status"] == "replied_interested"
+    assert company_payload["feasibility"] == "Worth follow-up"
+    assert company_payload["last_contacted_at"] == "2026-06-28T09:30:00Z"
+    assert company_payload["latest_reply"]["intent"] == "interested"
+    assert company_payload["contacts_hit"] == 8
+
+    timeline_response = client.get("/api/v1/progress/contacts/mara-whitfield/timeline")
+
+    assert timeline_response.status_code == 200
+    timeline_payload = timeline_response.json()
+    assert timeline_payload["contact_id"] == "mara-whitfield"
+    assert timeline_payload["current_state"] == "replied_interested"
+    assert timeline_payload["items"][0]["event_type"] == "sent"
+    assert timeline_payload["items"][1]["event_type"] == "reply"
+    assert timeline_payload["items"][2]["event_type"] == "state_change"

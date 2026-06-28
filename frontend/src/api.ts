@@ -178,6 +178,39 @@ export type ManualConfirmQueueResponse = {
   items: ManualConfirmItem[];
 };
 
+export type CompanyProgress = {
+  company_id: string;
+  company_name: string;
+  industry: string;
+  overall_status: string;
+  feasibility: string;
+  last_contacted_at: string;
+  contacts_hit: number;
+  total_contacts: number;
+  latest_reply: {
+    contact_name: string;
+    intent: string;
+    excerpt: string;
+    received_at: string;
+  };
+};
+
+export type TimelineEvent = {
+  id: string;
+  event_type: string;
+  title: string;
+  detail: string;
+  occurred_at: string;
+};
+
+export type ContactTimeline = {
+  contact_id: string;
+  contact_name: string;
+  company_name: string;
+  current_state: string;
+  items: TimelineEvent[];
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -235,6 +268,14 @@ export function fetchInboxThreads() {
 
 export function fetchManualConfirmQueue() {
   return request<ManualConfirmQueueResponse>("/api/v1/inbox/manual-confirm");
+}
+
+export function fetchCompanyProgress(companyId: string) {
+  return request<CompanyProgress>(`/api/v1/progress/companies/${companyId}`);
+}
+
+export function fetchContactTimeline(contactId: string) {
+  return request<ContactTimeline>(`/api/v1/progress/contacts/${contactId}/timeline`);
 }
 
 export function fetchTemplates() {

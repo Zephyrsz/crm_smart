@@ -25,6 +25,7 @@ from app.schemas.imports import (
     VerificationStage,
 )
 from app.schemas.inbox import EmailMessage, InboxThread, ManualConfirmItem
+from app.schemas.progress import CompanyProgress, ContactTimeline, LatestReply, TimelineEvent
 
 
 def get_dashboard_summary() -> DashboardSummary:
@@ -354,6 +355,63 @@ def get_manual_confirm_queue() -> list[ManualConfirmItem]:
             reply_excerpt="Happy to meet next week. Please send a calendar link.",
         ),
     ]
+
+
+def get_company_progress(company_id: str) -> CompanyProgress | None:
+    progress_by_id = {
+        "northwind-labs": CompanyProgress(
+            company_id="northwind-labs",
+            company_name="Northwind Labs",
+            industry="B2B SaaS",
+            overall_status="replied_interested",
+            feasibility="Worth follow-up",
+            last_contacted_at="2026-06-28T09:30:00Z",
+            contacts_hit=8,
+            total_contacts=12,
+            latest_reply=LatestReply(
+                contact_name="Mara Whitfield",
+                intent="interested",
+                excerpt="This looks relevant. Can you send details?",
+                received_at="2026-06-28T09:30:00Z",
+            ),
+        )
+    }
+    return progress_by_id.get(company_id)
+
+
+def get_contact_timeline(contact_id: str) -> ContactTimeline | None:
+    timeline_by_id = {
+        "mara-whitfield": ContactTimeline(
+            contact_id="mara-whitfield",
+            contact_name="Mara Whitfield",
+            company_name="Northwind Labs",
+            current_state="replied_interested",
+            items=[
+                TimelineEvent(
+                    id="timeline-mara-1",
+                    event_type="sent",
+                    title="Template sent",
+                    detail="SaaS intro · short v3",
+                    occurred_at="2026-06-27T09:00:00Z",
+                ),
+                TimelineEvent(
+                    id="timeline-mara-2",
+                    event_type="reply",
+                    title="Interested reply",
+                    detail="This looks relevant. Can you send details?",
+                    occurred_at="2026-06-28T09:30:00Z",
+                ),
+                TimelineEvent(
+                    id="timeline-mara-3",
+                    event_type="state_change",
+                    title="State changed",
+                    detail="awaiting_reply -> replied_interested",
+                    occurred_at="2026-06-28T09:31:00Z",
+                ),
+            ],
+        )
+    }
+    return timeline_by_id.get(contact_id)
 
 
 def get_templates() -> list[EmailTemplate]:

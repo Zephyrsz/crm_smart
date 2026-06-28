@@ -178,6 +178,46 @@ const manualConfirm = {
   ]
 };
 
+const companyProgress = {
+  company_id: "northwind-labs",
+  company_name: "Northwind Labs",
+  industry: "B2B SaaS",
+  overall_status: "replied_interested",
+  feasibility: "Worth follow-up",
+  last_contacted_at: "2026-06-28T09:30:00Z",
+  contacts_hit: 8,
+  total_contacts: 12,
+  latest_reply: {
+    contact_name: "Mara Whitfield",
+    intent: "interested",
+    excerpt: "This looks relevant. Can you send details?",
+    received_at: "2026-06-28T09:30:00Z"
+  }
+};
+
+const contactTimeline = {
+  contact_id: "mara-whitfield",
+  contact_name: "Mara Whitfield",
+  company_name: "Northwind Labs",
+  current_state: "replied_interested",
+  items: [
+    {
+      id: "tl-1",
+      event_type: "sent",
+      title: "Template sent",
+      detail: "SaaS intro · short v3",
+      occurred_at: "2026-06-27T09:00:00Z"
+    },
+    {
+      id: "tl-2",
+      event_type: "reply",
+      title: "Interested reply",
+      detail: "This looks relevant. Can you send details?",
+      occurred_at: "2026-06-28T09:30:00Z"
+    }
+  ]
+};
+
 function renderApp() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -221,6 +261,12 @@ beforeEach(() => {
       }
       if (path.endsWith("/api/v1/inbox/manual-confirm")) {
         return Response.json(manualConfirm);
+      }
+      if (path.endsWith("/api/v1/progress/companies/northwind-labs")) {
+        return Response.json(companyProgress);
+      }
+      if (path.endsWith("/api/v1/progress/contacts/mara-whitfield/timeline")) {
+        return Response.json(contactTimeline);
       }
       return new Response("Not found", { status: 404 });
     })
@@ -319,5 +365,19 @@ describe("Outreach OS shell", () => {
     expect(screen.getAllByText("Interested").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Send next-step template")).toBeInTheDocument();
     expect(screen.getAllByText("This looks relevant. Can you send details?").length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("renders outreach progress with company feasibility and contact timeline", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Progress" }));
+
+    expect(await screen.findByRole("heading", { name: "Outreach progress" })).toBeInTheDocument();
+    expect(await screen.findByText("Worth follow-up")).toBeInTheDocument();
+    expect(screen.getByText("8 of 12 contacts hit")).toBeInTheDocument();
+    expect(screen.getByText("Mara Whitfield")).toBeInTheDocument();
+    expect(screen.getByText("Template sent")).toBeInTheDocument();
+    expect(screen.getByText("Interested reply")).toBeInTheDocument();
   });
 });

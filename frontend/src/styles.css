@@ -1063,6 +1063,93 @@ progress::-moz-progress-bar {
   font-size: 11.5px;
 }
 
+.mailbox-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  gap: 13px;
+}
+
+.mailbox-account {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mailbox-account strong,
+.mailbox-account span,
+.mailbox-facts span,
+.mailbox-facts strong,
+.dns-row strong,
+.dns-row span {
+  display: block;
+}
+
+.mailbox-account span,
+.mailbox-facts span,
+.dns-row span {
+  color: var(--muted);
+}
+
+.mailbox-account strong,
+.mailbox-row > span {
+  font-family: var(--mono);
+}
+
+.mailbox-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid oklch(0.94 0.004 265);
+}
+
+.token-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: oklch(0.97 0.003 265);
+  color: var(--muted);
+}
+
+.mailbox-pool,
+.dns-list {
+  display: grid;
+  gap: 9px;
+}
+
+.mailbox-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px 100px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid oklch(0.94 0.004 265);
+}
+
+.mailbox-row strong {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.dns-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.deliverability-rates {
+  margin-top: 15px;
+}
+
 .drop-zone strong,
 .empty-state strong {
   color: var(--ink);
@@ -1132,7 +1219,10 @@ progress::-moz-progress-bar {
   .dashboard-grid,
   .campaign-layout,
   .inbox-layout,
-  .progress-layout {
+  .progress-layout,
+  .mailbox-layout,
+  .mailbox-facts,
+  .mailbox-row {
     grid-template-columns: 1fr;
   }
 

@@ -198,3 +198,17 @@ def test_progress_endpoints_expose_company_feasibility_and_contact_timeline():
     assert timeline_payload["items"][0]["event_type"] == "sent"
     assert timeline_payload["items"][1]["event_type"] == "reply"
     assert timeline_payload["items"][2]["event_type"] == "state_change"
+
+
+def test_mailbox_infrastructure_exposes_oauth_pool_and_deliverability():
+    response = client.get("/api/v1/mailboxes/summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["shared_account"]["email"] == "outbound@northwind.io"
+    assert payload["shared_account"]["provider"] == "Microsoft Graph"
+    assert payload["shared_account"]["auth_method"] == "OAuth2 refresh token"
+    assert payload["shared_account"]["scopes"] == ["Mail.Send", "Mail.Read"]
+    assert payload["pool"][0]["state"] == "healthy"
+    assert payload["dns_checks"][0]["name"] == "SPF"
+    assert payload["deliverability"]["bounce_rate"] == "1.4%"

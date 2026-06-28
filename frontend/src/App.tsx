@@ -31,6 +31,7 @@ import {
   type EmailTemplate,
   type ImportPreview,
   type InboxThread,
+  type MailboxSummary,
   type ManualConfirmItem,
   fetchCampaignLaunchSummary,
   fetchCampaigns,
@@ -41,6 +42,7 @@ import {
   fetchDashboardSummary,
   fetchInboxThreads,
   fetchImportPreview,
+  fetchMailboxSummary,
   fetchManualConfirmQueue,
   fetchTemplates,
 } from "./api";
@@ -96,7 +98,7 @@ function App() {
           {screen === "inbox" && <Inbox />}
           {screen === "progress" && <Progress />}
           {screen === "templates" && <Templates />}
-          {screen === "mailboxes" && <PlaceholderScreen title="Mailboxes" subtitle="Shared mailbox OAuth, warm-up, and deliverability health." />}
+          {screen === "mailboxes" && <Mailboxes />}
         </main>
       </div>
     </div>
@@ -913,6 +915,97 @@ function ContactTimelineList({ timeline }: { timeline: ContactTimeline }) {
           </div>
         </article>
       ))}
+    </div>
+  );
+}
+
+function Mailboxes() {
+  const query = useQuery({ queryKey: ["mailbox-summary"], queryFn: fetchMailboxSummary });
+
+  return (
+    <section className="screen screen-wide">
+      <ScreenHeader title="Mailbox infrastructure" subtitle="Shared sending account, OAuth authorization, and deliverability." />
+      <QueryState query={query}>{(data) => <MailboxContent data={data} />}</QueryState>
+    </section>
+  );
+}
+
+function MailboxContent({ data }: { data: MailboxSummary }) {
+  return (
+    <div className="mailbox-layout">
+      <div className="column-stack">
+        <Panel title="Shared mailbox" tag={data.shared_account.status}>
+          <div className="mailbox-account">
+            <div>
+              <strong>{data.shared_account.email}</strong>
+              <span>Shared sending and inbox sync</span>
+            </div>
+            <Badge tone="valid">{data.shared_account.status}</Badge>
+          </div>
+          <div className="mailbox-facts">
+            <div>
+              <span>Provider</span>
+              <strong>{data.shared_account.provider}</strong>
+            </div>
+            <div>
+              <span>Auth</span>
+              <strong>{data.shared_account.auth_method}</strong>
+            </div>
+            <div>
+              <span>Scopes</span>
+              <strong>{data.shared_account.scopes.join(" · ")}</strong>
+            </div>
+          </div>
+          <div className="token-note">
+            <Lock size={14} />
+            <span>{data.shared_account.token_storage} · revocable · least-privilege scopes only</span>
+          </div>
+        </Panel>
+
+        <Panel title="Sending pool" subtitle="Warm-up and daily caps">
+          <div className="mailbox-pool">
+            {data.pool.map((mailbox) => (
+              <div className="mailbox-row" key={mailbox.id}>
+                <span>{mailbox.email}</span>
+                <strong>
+                  {mailbox.sent_today}/{mailbox.daily_cap}
+                </strong>
+                <progress value={mailbox.warmup_pct} max={100} aria-label={`${mailbox.email} warm-up`} />
+                <Badge tone={mailbox.state === "healthy" ? "valid" : "later"}>{mailbox.state}</Badge>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <Panel title="Deliverability health">
+        <div className="dns-list">
+          {data.dns_checks.map((check) => (
+            <div className="dns-row" key={check.name}>
+              <span className={`status-dot ${check.status === "aligned" || check.status === "valid" ? "valid" : "risky"}`} />
+              <div>
+                <strong>{check.name}</strong>
+                <span>{check.detail}</span>
+              </div>
+              <Badge tone="valid">{check.status}</Badge>
+            </div>
+          ))}
+        </div>
+        <div className="deliverability-rates">
+          <div className="summary-row">
+            <span>Bounce rate</span>
+            <strong>{data.deliverability.bounce_rate}</strong>
+          </div>
+          <div className="summary-row">
+            <span>Spam complaint</span>
+            <strong>{data.deliverability.complaint_rate}</strong>
+          </div>
+          <div className="summary-row">
+            <span>Reply rate</span>
+            <strong>{data.deliverability.reply_rate}</strong>
+          </div>
+        </div>
+      </Panel>
     </div>
   );
 }

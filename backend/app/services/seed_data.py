@@ -25,6 +25,13 @@ from app.schemas.imports import (
     VerificationStage,
 )
 from app.schemas.inbox import EmailMessage, InboxThread, ManualConfirmItem
+from app.schemas.mailboxes import (
+    DeliverabilitySummary,
+    DnsCheck,
+    MailboxPoolItem,
+    MailboxSummary,
+    SharedMailboxAccount,
+)
 from app.schemas.progress import CompanyProgress, ContactTimeline, LatestReply, TimelineEvent
 
 
@@ -412,6 +419,55 @@ def get_contact_timeline(contact_id: str) -> ContactTimeline | None:
         )
     }
     return timeline_by_id.get(contact_id)
+
+
+def get_mailbox_summary() -> MailboxSummary:
+    return MailboxSummary(
+        shared_account=SharedMailboxAccount(
+            email="outbound@northwind.io",
+            provider="Microsoft Graph",
+            auth_method="OAuth2 refresh token",
+            status="connected",
+            scopes=["Mail.Send", "Mail.Read"],
+            token_storage="Encrypted at rest",
+        ),
+        pool=[
+            MailboxPoolItem(
+                id="outbound-primary",
+                email="outbound@northwind.io",
+                sent_today=92,
+                daily_cap=200,
+                warmup_pct=46,
+                state="healthy",
+            ),
+            MailboxPoolItem(
+                id="hello-secondary",
+                email="hello@northwind.io",
+                sent_today=140,
+                daily_cap=200,
+                warmup_pct=70,
+                state="healthy",
+            ),
+            MailboxPoolItem(
+                id="team-warmup",
+                email="team@northwind.io",
+                sent_today=38,
+                daily_cap=120,
+                warmup_pct=32,
+                state="warming",
+            ),
+        ],
+        dns_checks=[
+            DnsCheck(name="SPF", detail="v=spf1 include:_spf.northwind.io", status="aligned"),
+            DnsCheck(name="DKIM", detail="2048-bit selector s1", status="valid"),
+            DnsCheck(name="DMARC", detail="p=quarantine rua reporting on", status="valid"),
+        ],
+        deliverability=DeliverabilitySummary(
+            bounce_rate="1.4%",
+            complaint_rate="0.02%",
+            reply_rate="7.8%",
+        ),
+    )
 
 
 def get_templates() -> list[EmailTemplate]:

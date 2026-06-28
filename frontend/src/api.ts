@@ -211,6 +211,35 @@ export type ContactTimeline = {
   items: TimelineEvent[];
 };
 
+export type MailboxSummary = {
+  shared_account: {
+    email: string;
+    provider: string;
+    auth_method: string;
+    status: string;
+    scopes: string[];
+    token_storage: string;
+  };
+  pool: Array<{
+    id: string;
+    email: string;
+    sent_today: number;
+    daily_cap: number;
+    warmup_pct: number;
+    state: string;
+  }>;
+  dns_checks: Array<{
+    name: string;
+    detail: string;
+    status: string;
+  }>;
+  deliverability: {
+    bounce_rate: string;
+    complaint_rate: string;
+    reply_rate: string;
+  };
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -276,6 +305,10 @@ export function fetchCompanyProgress(companyId: string) {
 
 export function fetchContactTimeline(contactId: string) {
   return request<ContactTimeline>(`/api/v1/progress/contacts/${contactId}/timeline`);
+}
+
+export function fetchMailboxSummary() {
+  return request<MailboxSummary>("/api/v1/mailboxes/summary");
 }
 
 export function fetchTemplates() {

@@ -218,6 +218,37 @@ const contactTimeline = {
   ]
 };
 
+const mailboxSummary = {
+  shared_account: {
+    email: "outbound@northwind.io",
+    provider: "Microsoft Graph",
+    auth_method: "OAuth2 refresh token",
+    status: "connected",
+    scopes: ["Mail.Send", "Mail.Read"],
+    token_storage: "Encrypted at rest"
+  },
+  pool: [
+    {
+      id: "outbound-primary",
+      email: "outbound@northwind.io",
+      sent_today: 92,
+      daily_cap: 200,
+      warmup_pct: 46,
+      state: "healthy"
+    }
+  ],
+  dns_checks: [
+    { name: "SPF", detail: "v=spf1 include:_spf.northwind.io", status: "aligned" },
+    { name: "DKIM", detail: "2048-bit selector s1", status: "valid" },
+    { name: "DMARC", detail: "p=quarantine rua reporting on", status: "valid" }
+  ],
+  deliverability: {
+    bounce_rate: "1.4%",
+    complaint_rate: "0.02%",
+    reply_rate: "7.8%"
+  }
+};
+
 function renderApp() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -267,6 +298,9 @@ beforeEach(() => {
       }
       if (path.endsWith("/api/v1/progress/contacts/mara-whitfield/timeline")) {
         return Response.json(contactTimeline);
+      }
+      if (path.endsWith("/api/v1/mailboxes/summary")) {
+        return Response.json(mailboxSummary);
       }
       return new Response("Not found", { status: 404 });
     })
@@ -379,5 +413,20 @@ describe("Outreach OS shell", () => {
     expect(screen.getByText("Mara Whitfield")).toBeInTheDocument();
     expect(screen.getByText("Template sent")).toBeInTheDocument();
     expect(screen.getByText("Interested reply")).toBeInTheDocument();
+  });
+
+  test("renders mailbox infrastructure with OAuth and deliverability health", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Mailboxes" }));
+
+    expect(await screen.findByRole("heading", { name: "Mailbox infrastructure" })).toBeInTheDocument();
+    expect((await screen.findAllByText("outbound@northwind.io")).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Microsoft Graph")).toBeInTheDocument();
+    expect(screen.getByText("OAuth2 refresh token")).toBeInTheDocument();
+    expect(screen.getByText("Mail.Send · Mail.Read")).toBeInTheDocument();
+    expect(screen.getByText("SPF")).toBeInTheDocument();
+    expect(screen.getByText("1.4%")).toBeInTheDocument();
   });
 });

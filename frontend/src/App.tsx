@@ -19,11 +19,15 @@ import {
 } from "lucide-react";
 
 import {
+  type Company,
   type Contact,
   type DashboardSummary,
   type EmailTemplate,
+  type ImportPreview,
+  fetchCompanies,
   fetchContacts,
   fetchDashboardSummary,
+  fetchImportPreview,
   fetchTemplates,
 } from "./api";
 
@@ -70,7 +74,7 @@ function App() {
         <main className="main-panel">
           {screen === "dashboard" && <Dashboard />}
           {screen === "contacts" && <Contacts />}
-          {screen === "companies" && <PlaceholderScreen title="Companies" subtitle="Account progress and feasibility status." />}
+          {screen === "companies" && <Companies />}
           {screen === "import" && <ImportWizard />}
           {screen === "campaigns" && <Campaigns />}
           {screen === "templates" && <Templates />}
@@ -356,6 +360,58 @@ function ContactRow({ contact }: { contact: Contact }) {
   );
 }
 
+function Companies() {
+  const query = useQuery({ queryKey: ["companies"], queryFn: fetchCompanies });
+
+  return (
+    <section className="screen screen-wide">
+      <ScreenHeader title="Companies" subtitle="Account-level progress, last contact, and feasibility status." />
+      <QueryState query={query}>
+        {(data) => (
+          <Panel title={`${data.total} companies`}>
+            <div className="data-table company-table" role="table" aria-label="Companies">
+              <div className="table-row table-head" role="row">
+                <span role="columnheader">Company</span>
+                <span role="columnheader">Industry</span>
+                <span role="columnheader">Progress</span>
+                <span role="columnheader">Feasibility</span>
+                <span role="columnheader">Last contact</span>
+              </div>
+              {data.items.map((company) => (
+                <CompanyRow company={company} key={company.id} />
+              ))}
+            </div>
+          </Panel>
+        )}
+      </QueryState>
+    </section>
+  );
+}
+
+function CompanyRow({ company }: { company: Company }) {
+  return (
+    <div className="table-row" role="row">
+      <span role="cell">
+        <strong>{company.name}</strong>
+        <small>
+          {company.size} · {company.contacts_hit} contacts hit
+        </small>
+      </span>
+      <span role="cell">{company.industry}</span>
+      <span role="cell">
+        <span className="progress-cell">
+          <progress value={company.progress} max={100} aria-label={`${company.name} progress`} />
+          <strong>{company.progress}%</strong>
+        </span>
+      </span>
+      <span role="cell">
+        <Badge tone={company.feasibility.toLowerCase()}>{company.feasibility}</Badge>
+      </span>
+      <span role="cell">{company.last_contacted}</span>
+    </div>
+  );
+}
+
 function Templates() {
   const query = useQuery({ queryKey: ["templates"], queryFn: fetchTemplates });
 
@@ -440,27 +496,111 @@ function TemplateCard({ template }: { template: EmailTemplate }) {
 }
 
 function ImportWizard() {
+  const query = useQuery({ queryKey: ["import-preview"], queryFn: fetchImportPreview });
   const steps = ["Upload", "Map fields", "Validate", "Verify", "Done"];
 
   return (
     <section className="screen">
       <ScreenHeader title="Import contacts" subtitle="Excel / CSV → field mapping → validation → email verification" />
-      <Panel>
-        <div className="stepper" aria-label="Import steps">
-          {steps.map((step, index) => (
-            <div className={index === 0 ? "step active" : "step"} key={step}>
-              <span>{index + 1}</span>
-              {step}
+      <QueryState query={query}>
+        {(preview) => (
+          <Panel>
+            <div className="stepper" aria-label="Import steps">
+              {steps.map((step, index) => (
+                <div className={index <= 3 ? "step active" : "step"} key={step}>
+                  <span>{index < 3 ? <Check size={13} /> : index + 1}</span>
+                  {step}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="drop-zone">
-          <Database size={28} />
-          <strong>Drag an Excel or CSV file here</strong>
-          <span>.xlsx, .xls, .csv up to 50 MB</span>
-        </div>
-      </Panel>
+            <ImportContent preview={preview} />
+          </Panel>
+        )}
+      </QueryState>
     </section>
+  );
+}
+
+function ImportContent({ preview }: { preview: ImportPreview }) {
+  return (
+    <div className="import-grid">
+      <div className="file-card">
+        <Database size={24} />
+        <div>
+          <strong>{preview.source_file}</strong>
+          <span>
+            {preview.file_size} · parsed {formatNumber(preview.total_rows)} rows · {preview.detected_columns.length} columns detected
+          </span>
+        </div>
+        <Badge tone="valid">Parsed</Badge>
+      </div>
+
+      <div className="mapping-list">
+        <div className="mapping-head">
+          <strong>{preview.mapped_count} of {preview.detected_columns.length}</strong>
+          <span>columns mapped · Email required field</span>
+        </div>
+        {preview.mapping_rows.slice(0, 5).map((row) => (
+          <div className="mapping-row" key={row.source_column}>
+            <code>{row.source_column}</code>
+            <span>{row.sample_value}</span>
+            <strong>{row.target_field}</strong>
+            <Badge tone={row.mapped ? "valid" : "unknown"}>{row.mapped ? "Mapped" : "Skipped"}</Badge>
+          </div>
+        ))}
+      </div>
+
+      <div className="validation-cards">
+        <article>
+          <span>Total rows</span>
+          <strong>{formatNumber(preview.validation.total_rows)}</strong>
+        </article>
+        <article>
+          <span>Ready to import</span>
+          <strong>{formatNumber(preview.validation.ready_to_import)}</strong>
+        </article>
+        <article>
+          <span>Need attention</span>
+          <strong>{formatNumber(preview.validation.need_attention)}</strong>
+        </article>
+      </div>
+
+      <div className="issue-list">
+        {preview.validation.issues.map((issue) => (
+          <div className="issue-row" key={issue.label}>
+            <span className={`status-dot ${issue.severity === "error" ? "invalid" : issue.severity === "warning" ? "risky" : "meeting"}`} />
+            <div>
+              <strong>{issue.label}</strong>
+              <small>{issue.detail}</small>
+            </div>
+            <b>{issue.count}</b>
+            <Badge tone={issue.severity === "error" ? "invalid" : "info"}>{issue.action}</Badge>
+          </div>
+        ))}
+      </div>
+
+      <div className="verification-summary">
+        <Panel title="Verification result" subtitle={`${formatNumber(preview.total_rows)} emails`}>
+          <div className="bucket-list">
+            {preview.verification.buckets.map((bucket) => (
+              <div className="bucket" key={bucket.status}>
+                <div>
+                  <span className={`status-dot ${bucket.status}`} />
+                  <span>{bucket.label}</span>
+                  <strong>{formatNumber(bucket.count)}</strong>
+                  <small>{bucket.pct}%</small>
+                </div>
+                <progress value={bucket.pct} max={100} aria-label={bucket.label} />
+              </div>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Send eligibility">
+          <div className="sendable-number">{formatNumber(preview.verification.send_eligible)}</div>
+          <p className="body-copy">{formatNumber(preview.verification.suppressed)} routed to suppression</p>
+        </Panel>
+      </div>
+    </div>
   );
 }
 

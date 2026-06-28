@@ -70,3 +70,43 @@ def test_templates_endpoint_marks_active_campaign_templates_locked():
     draft = next(item for item in payload["items"] if item["id"] == "breakup")
     assert draft["status"] == "draft"
     assert draft["locked"] is False
+
+
+def test_import_preview_exposes_mapping_validation_and_verification_stages():
+    response = client.get("/api/v1/imports/preview")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source_file"] == "leads_q2_apac.xlsx"
+    assert payload["total_rows"] == 1248
+    assert payload["detected_columns"][:3] == ["first_name", "last_name", "work_email"]
+    assert payload["mapped_count"] == 7
+    assert payload["validation"]["ready_to_import"] == 1006
+    assert payload["validation"]["issues"][0] == {
+        "label": "Missing email address",
+        "detail": "rows 44, 109, 251 ... cannot be contacted",
+        "count": 38,
+        "action": "skip",
+        "severity": "error",
+    }
+    assert payload["verification"]["send_eligible"] == 842
+    assert payload["verification"]["buckets"][0]["status"] == "valid"
+
+
+def test_companies_endpoint_returns_account_progress_and_feasibility():
+    response = client.get("/api/v1/companies")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 6
+    assert payload["items"][0] == {
+        "id": "northwind-labs",
+        "name": "Northwind Labs",
+        "industry": "B2B SaaS",
+        "size": "200-500",
+        "status": "active",
+        "progress": 70,
+        "contacts_hit": 8,
+        "last_contacted": "2d",
+        "feasibility": "Valid",
+    }

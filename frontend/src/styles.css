@@ -598,6 +598,8 @@ progress::-moz-progress-bar {
 }
 
 .badge-info,
+.badge-blue,
+.badge-unknown,
 .badge-locked {
   background: var(--accent-soft);
   color: oklch(0.42 0.16 262);
@@ -614,6 +616,24 @@ progress::-moz-progress-bar {
   align-items: center;
   padding: 12px 8px;
   border-top: 1px solid oklch(0.94 0.004 265);
+}
+
+.company-table .table-row {
+  grid-template-columns: minmax(240px, 1.2fr) minmax(130px, 0.8fr) minmax(150px, 0.9fr) 120px 110px;
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-cell progress {
+  min-width: 84px;
+}
+
+.progress-cell strong {
+  font-family: var(--mono);
 }
 
 .table-head {
@@ -771,6 +791,106 @@ progress::-moz-progress-bar {
   background: oklch(0.975 0.012 262);
   color: var(--muted);
   text-align: center;
+}
+
+.import-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.file-card,
+.mapping-row,
+.issue-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.file-card div,
+.issue-row div {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-card strong,
+.file-card span,
+.issue-row strong,
+.issue-row small {
+  display: block;
+}
+
+.file-card span,
+.issue-row small,
+.mapping-head span {
+  color: var(--muted);
+}
+
+.mapping-list,
+.issue-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mapping-head {
+  display: flex;
+  gap: 8px;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr auto;
+}
+
+.mapping-row code {
+  font-family: var(--mono);
+}
+
+.validation-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.validation-cards article {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.validation-cards span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.validation-cards strong,
+.sendable-number {
+  display: block;
+  margin-top: 6px;
+  font: 800 26px var(--mono);
+}
+
+.issue-row b {
+  font-family: var(--mono);
+}
+
+.verification-summary {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr;
+  gap: 13px;
+}
+
+.sendable-number {
+  color: var(--valid);
+  font-size: 34px;
 }
 
 .drop-zone strong,

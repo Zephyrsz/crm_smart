@@ -1,4 +1,5 @@
 from app.schemas.contacts import Contact
+from app.schemas.companies import Company
 from app.schemas.dashboard import (
     DashboardSummary,
     KpiMetric,
@@ -8,6 +9,15 @@ from app.schemas.dashboard import (
     VerificationBucket,
 )
 from app.schemas.templates import EmailTemplate
+from app.schemas.imports import (
+    ImportPreview,
+    ImportValidationSummary,
+    ImportVerificationSummary,
+    MappingRow,
+    ValidationIssue,
+    VerificationBucket as ImportVerificationBucket,
+    VerificationStage,
+)
 
 
 def get_dashboard_summary() -> DashboardSummary:
@@ -64,6 +74,113 @@ def get_contacts() -> list[Contact]:
         )
         for id_, name, title, email, company, email_status, stage in rows
     ]
+
+
+def get_companies() -> list[Company]:
+    rows = [
+        ("northwind-labs", "Northwind Labs", "B2B SaaS", "200-500", "active", 70, 8, "2d", "Valid"),
+        ("brightforge", "BrightForge", "MarTech", "50-200", "engaged", 55, 5, "4d", "Blue"),
+        ("lumenpay", "LumenPay", "Fintech", "500+", "stalled", 30, 12, "11d", "Risky"),
+        ("hexadata", "Hexadata", "Data Infra", "50-200", "meeting", 90, 4, "1d", "Valid"),
+        ("sakura-cloud", "Sakura Cloud", "Cloud", "200-500", "active", 60, 7, "3d", "Valid"),
+        ("finquark", "FinQuark", "Fintech", "500+", "searching", 20, 9, "6d", "Unknown"),
+    ]
+    return [
+        Company(
+            id=id_,
+            name=name,
+            industry=industry,
+            size=size,
+            status=status,
+            progress=progress,
+            contacts_hit=contacts_hit,
+            last_contacted=last_contacted,
+            feasibility=feasibility,
+        )
+        for id_, name, industry, size, status, progress, contacts_hit, last_contacted, feasibility in rows
+    ]
+
+
+def get_import_preview() -> ImportPreview:
+    mapping_rows = [
+        ("first_name", "Mara", "First name", "auto 98%", True),
+        ("last_name", "Whitfield", "Last name", "auto 97%", True),
+        ("work_email", "mara.w@northwind.io", "Email", "auto 99%", True),
+        ("company", "Northwind Labs", "Company", "auto 96%", True),
+        ("title", "VP Marketing", "Job title", "auto 94%", True),
+        ("sector", "B2B SaaS", "Industry", "auto 71%", True),
+        ("mobile", "+1 415 555 0148", "Phone", "auto 92%", True),
+        ("li_url", "linkedin.com/in/maraw", "Ignore", "manual", False),
+        ("notes", "met at SaaStr 25", "Ignore", "manual", False),
+    ]
+    return ImportPreview(
+        source_file="leads_q2_apac.xlsx",
+        file_size="2.4 MB",
+        total_rows=1248,
+        detected_columns=[row[0] for row in mapping_rows],
+        mapped_count=7,
+        mapping_rows=[
+            MappingRow(
+                source_column=source,
+                sample_value=sample,
+                target_field=target,
+                confidence=confidence,
+                mapped=mapped,
+            )
+            for source, sample, target, confidence, mapped in mapping_rows
+        ],
+        validation=ImportValidationSummary(
+            total_rows=1248,
+            ready_to_import=1006,
+            need_attention=242,
+            issues=[
+                ValidationIssue(
+                    label="Missing email address",
+                    detail="rows 44, 109, 251 ... cannot be contacted",
+                    count=38,
+                    action="skip",
+                    severity="error",
+                ),
+                ValidationIssue(
+                    label="Invalid email format",
+                    detail='examples: "john@@acme", "n/a", "-"',
+                    count=64,
+                    action="skip",
+                    severity="error",
+                ),
+                ValidationIssue(
+                    label="Duplicate within file",
+                    detail="same address appears 2+ times",
+                    count=92,
+                    action="merge",
+                    severity="warning",
+                ),
+                ValidationIssue(
+                    label="Already in CRM",
+                    detail="matched existing contact; upsert available",
+                    count=48,
+                    action="update",
+                    severity="info",
+                ),
+            ],
+        ),
+        verification=ImportVerificationSummary(
+            stages=[
+                VerificationStage(name="Syntax", passed=1210, failed=38),
+                VerificationStage(name="MX record", passed=1180, failed=30),
+                VerificationStage(name="SMTP probe", passed=998, failed=182),
+                VerificationStage(name="Catch-all", passed=810, failed=188),
+            ],
+            buckets=[
+                ImportVerificationBucket(label="Valid · deliverable", count=842, pct=67, status="valid"),
+                ImportVerificationBucket(label="Risky · catch-all", count=188, pct=15, status="risky"),
+                ImportVerificationBucket(label="Invalid · bounce", count=142, pct=11, status="invalid"),
+                ImportVerificationBucket(label="Unknown", count=76, pct=7, status="unknown"),
+            ],
+            send_eligible=842,
+            suppressed=406,
+        ),
+    )
 
 
 def get_templates() -> list[EmailTemplate]:

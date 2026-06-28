@@ -49,6 +49,56 @@ export type ContactListResponse = {
   items: Contact[];
 };
 
+export type Company = {
+  id: string;
+  name: string;
+  industry: string;
+  size: string;
+  status: string;
+  progress: number;
+  contacts_hit: number;
+  last_contacted: string;
+  feasibility: string;
+};
+
+export type CompanyListResponse = {
+  total: number;
+  items: Company[];
+};
+
+export type ImportPreview = {
+  source_file: string;
+  file_size: string;
+  total_rows: number;
+  detected_columns: string[];
+  mapped_count: number;
+  mapping_rows: Array<{
+    source_column: string;
+    sample_value: string;
+    target_field: string;
+    confidence: string;
+    mapped: boolean;
+  }>;
+  validation: {
+    total_rows: number;
+    ready_to_import: number;
+    need_attention: number;
+    issues: Array<{
+      label: string;
+      detail: string;
+      count: number;
+      action: string;
+      severity: "error" | "warning" | "info";
+    }>;
+  };
+  verification: {
+    stages: Array<{ name: string; passed: number; failed: number }>;
+    buckets: VerificationBucket[];
+    send_eligible: number;
+    suppressed: number;
+  };
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
@@ -82,6 +132,14 @@ export function fetchDashboardSummary() {
 
 export function fetchContacts() {
   return request<ContactListResponse>("/api/v1/contacts");
+}
+
+export function fetchCompanies() {
+  return request<CompanyListResponse>("/api/v1/companies");
+}
+
+export function fetchImportPreview() {
+  return request<ImportPreview>("/api/v1/imports/preview");
 }
 
 export function fetchTemplates() {

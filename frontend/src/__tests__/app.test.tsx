@@ -360,6 +360,8 @@ describe("Outreach OS shell", () => {
     expect(screen.getByText("Email verification health")).toBeInTheDocument();
     expect(screen.getByText("412")).toBeInTheDocument();
     expect(screen.getByText("386")).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Import$/ })).not.toBeInTheDocument();
   });
 
   test("navigates to contacts and renders email status plus outreach stage", async () => {
@@ -369,6 +371,8 @@ describe("Outreach OS shell", () => {
     await user.click(screen.getByRole("button", { name: "Contacts" }));
 
     expect(await screen.findByRole("heading", { name: "Contacts" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search contacts" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Import$/ })).not.toBeInTheDocument();
     const row = screen.getByRole("row", { name: /Mara Whitfield/ });
     expect(within(row).getByText("Valid")).toBeInTheDocument();
     expect(within(row).getByText("Replied · interested")).toBeInTheDocument();
@@ -394,6 +398,8 @@ describe("Outreach OS shell", () => {
     await user.click(screen.getByRole("button", { name: "Import data" }));
 
     expect(await screen.findByRole("heading", { name: "Import contacts" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Import$/ })).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
     expect(await screen.findByText("leads_q2_apac.xlsx")).toBeInTheDocument();
     expect(screen.getByText("1,006")).toBeInTheDocument();
     expect(screen.getByText("Missing email address")).toBeInTheDocument();
@@ -407,6 +413,8 @@ describe("Outreach OS shell", () => {
     await user.click(screen.getByRole("button", { name: "Companies" }));
 
     expect(await screen.findByRole("heading", { name: "Companies" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search companies" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Import$/ })).not.toBeInTheDocument();
     const row = screen.getByRole("row", { name: /Northwind Labs/ });
     expect(within(row).getByText("B2B SaaS")).toBeInTheDocument();
     expect(within(row).getByText("70%")).toBeInTheDocument();

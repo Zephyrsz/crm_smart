@@ -96,7 +96,7 @@ function App() {
     <div className="app-shell">
       <Sidebar current={screen} onNavigate={setScreen} />
       <div className="workspace">
-        <Topbar screen={screen} onImport={() => setScreen("import")} />
+        <Topbar screen={screen} />
         <main className="main-panel">
           {screen === "dashboard" && <Dashboard />}
           {screen === "contacts" && <Contacts />}
@@ -175,7 +175,7 @@ function NavGroup({
   );
 }
 
-function Topbar({ screen, onImport }: { screen: Screen; onImport: () => void }) {
+function Topbar({ screen }: { screen: Screen }) {
   const crumbs: Record<Screen, [string, string?]> = {
     dashboard: ["Dashboard"],
     contacts: ["Contacts"],
@@ -200,17 +200,6 @@ function Topbar({ screen, onImport }: { screen: Screen; onImport: () => void }) 
             <span>{leaf}</span>
           </>
         ) : null}
-      </div>
-      <div className="topbar-actions">
-        <div className="search-box">
-          <Search size={14} />
-          <span>Search contacts, companies...</span>
-          <kbd>⌘K</kbd>
-        </div>
-        <button className="primary-button" onClick={onImport} type="button">
-          <Upload size={14} />
-          Import
-        </button>
       </div>
     </header>
   );
@@ -352,7 +341,11 @@ function Contacts() {
 
   return (
     <section className="screen screen-wide">
-      <ScreenHeader title="Contacts" subtitle="Search, verify, and track individual outreach status." />
+      <ScreenHeader
+        title="Contacts"
+        subtitle="Search, verify, and track individual outreach status."
+        actions={<PageSearch label="Search contacts" placeholder="Search contacts..." />}
+      />
       <QueryState query={query}>
         {(data) => (
           <Panel title={`${data.total} contacts`}>
@@ -397,7 +390,11 @@ function Companies() {
 
   return (
     <section className="screen screen-wide">
-      <ScreenHeader title="Companies" subtitle="Account-level progress, last contact, and feasibility status." />
+      <ScreenHeader
+        title="Companies"
+        subtitle="Account-level progress, last contact, and feasibility status."
+        actions={<PageSearch label="Search companies" placeholder="Search companies..." />}
+      />
       <QueryState query={query}>
         {(data) => (
           <Panel title={`${data.total} companies`}>
@@ -533,7 +530,16 @@ function ImportWizard() {
 
   return (
     <section className="screen">
-      <ScreenHeader title="Import contacts" subtitle="Excel / CSV → field mapping → validation → email verification" />
+      <ScreenHeader
+        title="Import contacts"
+        subtitle="Excel / CSV → field mapping → validation → email verification"
+        actions={
+          <button className="primary-button" type="button">
+            <Upload size={14} />
+            Import
+          </button>
+        }
+      />
       <QueryState query={query}>
         {(preview) => (
           <Panel>
@@ -1104,15 +1110,35 @@ function PlaceholderScreen({ title, subtitle }: { title: string; subtitle: strin
   );
 }
 
-function ScreenHeader({ title, subtitle, meta }: { title: string; subtitle: string; meta?: string }) {
+function ScreenHeader({
+  title,
+  subtitle,
+  meta,
+  actions,
+}: {
+  title: string;
+  subtitle: string;
+  meta?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="screen-header">
       <div>
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>
-      {meta ? <div className="live-meta">{meta}</div> : null}
+      {actions ? <div className="screen-actions">{actions}</div> : meta ? <div className="live-meta">{meta}</div> : null}
     </div>
+  );
+}
+
+function PageSearch({ label, placeholder }: { label: string; placeholder: string }) {
+  return (
+    <label className="search-box">
+      <Search size={14} />
+      <span className="sr-only">{label}</span>
+      <input aria-label={label} placeholder={placeholder} type="search" />
+    </label>
   );
 }
 

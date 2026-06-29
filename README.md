@@ -6,7 +6,11 @@ Separated frontend/backend implementation for the intelligent CRM and sales outr
 
 - `backend/` - FastAPI service with versioned `/api/v1` routes.
 - `frontend/` - React + TypeScript + Vite SPA using the FastAPI JSON contract.
-- `Outreach_OS.dc.html` - original UI draft reference.
+- `PRODUCT.md` - product and design context for the operational CRM UI.
+
+The UI source of truth is the React app under `frontend/`. The original root-level
+Design Composer draft and its runtime have been removed after the module screens were
+implemented in the frontend.
 
 ## Run Backend
 

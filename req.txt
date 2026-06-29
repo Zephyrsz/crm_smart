@@ -1,4 +1,4 @@
-1. this project has a frontend ui draft  in /Users/rgwei/pj/pj_zk/crm_smart/Outreach_OS.dc.html
-2. I want to implement this project with frontend and backend seperated.
-3. you need to follow the /Users/rgwei/pj/pj_zk/crm_smart/Module_Task_List.md
-4. you need to use git to init the project and when implement the module page by page , each module need to add test case to test the module , when module finished and pasted, you need to add a git commit
+1. The original frontend UI draft has been ported into the React module under `/Users/rgwei/pj/pj_zk/crm_smart/frontend`.
+2. This project should keep frontend and backend separated.
+3. Follow `/Users/rgwei/pj/pj_zk/crm_smart/Module_Task_List.md`.
+4. When implementing modules page by page, each module needs test coverage. After a module is finished and tests pass, add a git commit.

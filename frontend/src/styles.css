@@ -213,13 +213,17 @@ button {
   color: var(--muted);
 }
 
-.search-box kbd {
-  margin-left: auto;
-  padding: 1px 4px;
-  border: 1px solid oklch(0.86 0.005 265);
-  border-radius: 4px;
-  color: oklch(0.5 0.012 265);
-  font: 10px var(--mono);
+.search-box input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.search-box input::placeholder {
+  color: oklch(0.48 0.012 265);
 }
 
 .primary-button,
@@ -287,9 +291,25 @@ button {
   color: var(--muted);
 }
 
+.screen-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .live-meta {
   color: var(--muted);
   font: 12px var(--mono);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .kpi-grid {
@@ -1275,8 +1295,14 @@ progress::-moz-progress-bar {
     padding: 0 14px;
   }
 
-  .search-box {
-    display: none;
+  .screen-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .screen-actions,
+  .screen-actions .search-box {
+    width: 100%;
   }
 
   .kpi-grid,
